@@ -4,6 +4,6 @@ authors:
   - family-names: Steffman
     given-names: Jeremy
 title: "f0 jump detector"
-doi: https://github.com/jsteffman/f0-jumps
+doi: 10.5281/zenodo.5708597
 version: 1.0.1
 date-released: 2021-11-17
