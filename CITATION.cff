@@ -3,7 +3,7 @@ message: ""
 authors:
   - family-names: Steffman
     given-names: Jeremy
-    orcid: https://orcid.org/0000-0003-4925-7248
 title: "f0 jump detector"
+doi: https://github.com/jsteffman/f0-jumps
 version: 1.0.1
 date-released: 2021-11-17
