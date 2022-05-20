@@ -29,7 +29,7 @@ data<-data %>%
          ratio = lead_F0/F0, 
          halving = ifelse(0.52>ratio&ratio>0.48,1,0), # change 0.52/0.48 to adjust what range of ratios count as halving.  1 in the output means halving has occured. 
          doubling = ifelse(2.02>ratio&ratio>1.98,1,0), # change 2.02/1.98 to adjust what range of ratios count as doubling. 1 in the output means doubling has occured. 
-         prose =ifelse(halving==1,"halving",ifelse(doubling==1,"doubling","neither")), # this column just says whether halving double or neither has happened for sample and the sample that follows it. 
+         prose =ifelse(halving==1,"halving",ifelse(doubling==1,"doubling","neither")), # this column just says whether halving double or neither has happened for a sample and the sample that follows it. 
          halving_mean = mean(halving,na.rm = TRUE), # prop. samples which halve/double
          doubling_mean= mean(doubling,na.rm = TRUE),
          halving_in_file=ifelse(halving_mean>0,1,0), # 1 if any samples in file halve, 0 otherwise
