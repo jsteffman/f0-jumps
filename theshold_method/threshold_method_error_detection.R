@@ -4,7 +4,7 @@
 # which are likely to be F0 measurement errors. 
 
 # created by:  Jeremy Steffman 
-# last updated: April 29, 2022
+# last updated: July 14, 2022
 ##############################################
 
 ### required input: 
@@ -27,7 +27,7 @@ library(tidyverse)
 
 # load in data here
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-data<-read.csv("example10speakers.csv") # change to be your data name
+data<-read.csv("example10speakers.csv") # change to be your data
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 #### SET THESE PARAMETERS #############################################
@@ -35,13 +35,13 @@ data<-read.csv("example10speakers.csv") # change to be your data name
 time_step_ms = 10 
 ## variable names
 # input the names of the required variables in your data frame
-# (2) name of F0 (in semitones): replace YOUR_VARIABLE_NAME_HERE with your variable
+# (2) name of the column containing F0 (in semitones): replace YOUR_VARIABLE_NAME_HERE with your variable
 data$F0_semitones <- data$YOUR_VARIABLE_NAME_HERE 
 # (3) name of variable that identifies each unique trajectory
 data$uniqueID <- data$YOUR_VARIABLE_NAME_HERE
 # (3) name of variable that identifies time, in milliseconds
 data$t_ms <- data$YOUR_VARIABLE_NAME_HERE
-# (3) name of variable that identifies speaker, for optional speaker summary stats
+# (3) name of variable that identifies speaker, for optional speaker summary statistics
 data$speaker <- data$YOUR_VARIABLE_NAME_HERE  
 
 #### ADJUST THESE THRESHOLDS IF DESIRED #### 
@@ -51,7 +51,7 @@ fall_threshold = 1.7142857143
 #######################################################################
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
-## run the rest of the scrip to annotate the data frame and  the save the outputs
+## Run the rest of the scrip to annotate the data frame and  the save the outputs
 
 time_mutation = time_step_ms/10
 
@@ -76,7 +76,7 @@ data_annotated %>% group_by(speaker) %>%
          err_count_by_speaker = sum(err,na.rm = T)) %>% 
   select(speaker,err_count_by_speaker,err_prop_by_speaker) %>% slice(1) -> data_summary_by_speaker
   
-
+# save files as csv - EXISTING FILES WILL BE OVERWRITTEN
 write.csv(data_summary_by_speaker,file="output_files/data_summary_by_speaker.csv")
 write.csv(data_summary_by_ID,file="output_files/data_summary_by_ID.csv")
 write.csv(data_summary_by_ID_errors_only,file="output_files/data_summary_by_ID_errors_only.csv")
