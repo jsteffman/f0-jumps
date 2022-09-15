@@ -4,7 +4,7 @@
 # which are likely to be F0 measurement errors. 
 
 # created by:  Jeremy Steffman 
-# last updated: July 14, 2022
+# last updated: September 13, 2022
 ##############################################
 
 ### required input: 
@@ -35,14 +35,15 @@ data<-read.csv("example10speakers.csv") # change to be your data
 time_step_ms = 10 
 ## variable names
 # input the names of the required variables in your data frame
-# (2) name of the column containing F0 (in semitones): replace YOUR_VARIABLE_NAME_HERE with your variable
-data$F0_semitones <- data$YOUR_VARIABLE_NAME_HERE 
+# (2) name of the column containing F0 (in semitones, and Hz): replace YOUR_VARIABLE_NAME_HERE with your variable
+data$F0_semitones <- data$F0_semitones 
+data$F0_Hz<-data$F0_Hz
 # (3) name of variable that identifies each unique trajectory
-data$uniqueID <- data$YOUR_VARIABLE_NAME_HERE
+data$uniqueID <- data$uniqueID
 # (3) name of variable that identifies time, in milliseconds
-data$t_ms <- data$YOUR_VARIABLE_NAME_HERE
+data$t_ms <- data$t_ms
 # (3) name of variable that identifies speaker, for optional speaker summary statistics
-data$speaker <- data$YOUR_VARIABLE_NAME_HERE  
+data$speaker <- data$speaker  
 
 #### ADJUST THESE THRESHOLDS IF DESIRED #### 
 # from Sundberg (1973), for 10 ms temporal intervals and female speakers
@@ -57,16 +58,79 @@ time_mutation = time_step_ms/10
 
 data %>% group_by(uniqueID) %>%  
   mutate(lead_F0_semitones= lead(F0_semitones, order_by=t_ms),
+         lead_F0_Hz= lead(F0_Hz, order_by=t_ms),
         diff = lead_F0_semitones-F0_semitones,
+        ratio_Hz = lead_F0_Hz/F0_Hz,
+        oct_jump = ifelse(ratio_Hz<0.49|ratio_Hz>1.99,1,0), # halving and doubling ratios for octave jump detection
         err = ifelse(diff>0&(abs(diff)*time_mutation)>rise_threshold,1,
               ifelse(diff<0&(abs(diff)*time_mutation)>fall_threshold,1,0)),
         err_prop_by_ID = mean(err,na.rm = T),
         err_count_by_ID = sum(err,na.rm = T),
-        err_in_ID=ifelse(err_prop_by_ID>0,1,0)) -> data_annotated
+        err_in_ID=ifelse(err_prop_by_ID>0,1,0),
+        time_of_err = ifelse(err_in_ID==1&err==1,t_ms,0), 
+        F0_of_err = ifelse(lag(err)==1,F0_semitones,0),
+        # compute octave jumps
+        oct_jump_prop_by_ID = mean(oct_jump,na.rm = T),
+        oct_jump_count_by_ID = sum(oct_jump,na.rm = T),
+        oct_jump_in_ID= ifelse(err_prop_by_ID>0,1,0)) %>% 
+      mutate_if(is.numeric, ~replace(., is.na(.), 0))-> data_annotated
+
+# the following part of the script computes "carryover errors". These are errors for which the sample to sample difference does not necessarily exceed the threshold by the specified amount, but they are within one threshold's worth of the first inaccurate F0 value and are temporally adjacent to it. It is important to emphasize that these *may not be errors*, but  can inspected, for e.g., pitch doubling which raises a whole string of values to be inaccurate. 
+
+
+data_annotated %>% group_by(uniqueID) %>% 
+  mutate(nrow=n(),
+         carryover_err_start = ifelse(lag(err)==1,1,0),
+         carryover_err = carryover_err_start) ->data_annotated
+
+x1 =1
+repeat {
+  data_annotated %>% group_by(uniqueID) %>% 
+    mutate(F0_of_err=ifelse(F0_of_err == 0,lag(F0_of_err,order_by = t_ms),F0_of_err)) -> data_annotated
+  
+  x1 = x1+1
+  print(paste0(round(x1/max(data_annotated$nrow)*100,0), "% done"))
+  if (x1 == max(data_annotated$nrow)){  
+    break
+  }
+}
+
+
+data_annotated$F0_of_err[is.na(data_annotated$F0_of_err)] <- 0
+
+x2=1
+repeat {
+  data_annotated %>% group_by(uniqueID) %>% 
+  mutate(carryover_err = 
+       ifelse(lag(carryover_err)==1& 
+              (lead(F0_semitones)>F0_semitones)& 
+              abs(F0_semitones-F0_of_err)<rise_threshold*1.5|
+             lag(carryover_err)==1&
+            (lead(F0_semitones)<F0_semitones)& 
+          abs(F0_semitones-F0_of_err)<fall_threshold*1.5,1,carryover_err))-> data_annotated
+  x2 = x2+1
+  print(paste0(round(x2/max(data_annotated$nrow)*100,0), "% done"))
+  if (x2 == max(data_annotated$nrow)){  
+    break
+             }
+}
+
+
+data_annotated$carryover_err[is.na(data_annotated$carryover_err)] <- 0
+
+data_annotated %>% group_by(uniqueID) %>% 
+  mutate(mean_carryover_err= mean(carryover_err),
+         carryover_err = ifelse(t_ms==max(t_ms)&lag(carryover_err)==1,1,carryover_err),
+         flagged_samples = carryover_err,
+          # flagged_samples includes the seeding samples for carryover error detection- i.e. some actual errors
+         carryover_only = ifelse(err==1,0,carryover_err)) -> data_annotated
+# carryover_only includes only carry over errors
 
 data_annotated %>% 
   group_by(uniqueID) %>% 
-  select(uniqueID,err_prop_by_ID,err_count_by_ID,err_in_ID) %>% slice(1) -> data_summary_by_ID
+  select(uniqueID,err_prop_by_ID,err_count_by_ID,err_in_ID,
+         oct_jump_prop_by_ID,oct_jump_count_by_ID,oct_jump_in_ID
+         ) %>% slice(1) -> data_summary_by_ID
 
 data_summary_by_ID %>% filter(err_in_ID==1) %>% 
   select(-err_in_ID) ->data_summary_by_ID_errors_only
