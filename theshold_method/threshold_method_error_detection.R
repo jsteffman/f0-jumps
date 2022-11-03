@@ -9,7 +9,8 @@
 
 ### required input: 
 # long format data with the following columns 
-# -F0 in semitones
+# -F0 in semitones (can be converted from Hz in R using this function): 
+# https://search.r-project.org/CRAN/refmans/hqmisc/html/f2st.html
 # -time in ms (can be at any interval, e.g., 1ms, 10ms, 100ms)
 # -a column which uniquely identifies each trajectory
 # -an optional column that contains speaker information. 
@@ -19,7 +20,7 @@
 # - a summary of flagged errors by unique identifier
 # - a summary of flagged errors by unique identifier ONLY for files which were flagged as errors
 # - a summary of errors by speaker, if the speaker column is specified 
-
+# descriptions of the annotated columns are given at the end of the script. 
 
 # this package required: 
 library(tidyverse)
