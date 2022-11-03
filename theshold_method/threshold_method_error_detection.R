@@ -4,7 +4,7 @@
 # which are likely to be F0 measurement errors. 
 
 # created by:  Jeremy Steffman 
-# last updated: September 13, 2022
+# last updated: November 3, 2022
 ##############################################
 
 ### required input: 
@@ -119,13 +119,16 @@ repeat {
 data_annotated$carryover_err[is.na(data_annotated$carryover_err)] <- 0
 
 data_annotated %>% group_by(uniqueID) %>% 
-  mutate(mean_carryover_err= mean(carryover_err),
-         carryover_err = ifelse(t_ms==max(t_ms)&lag(carryover_err)==1,1,carryover_err),
+  mutate(carryover_err = ifelse(t_ms==max(t_ms)&lag(carryover_err)==1,1,carryover_err),
          flagged_samples = carryover_err,
-          # flagged_samples includes the seeding samples for carryover error detection- i.e. some actual errors
-         carryover_only = ifelse(err==1,0,carryover_err)) -> data_annotated
+        # flagged_samples includes the seeding samples for carryover error detection- i.e. some actual errors
+         carryover_only = ifelse(err==1,0,carryover_err),
+        prop_carryover_err= mean(carryover_only)) -> data_annotated
 # carryover_only includes only carry over errors
 
+
+data_annotated %>% select(-nrow,-carryover_err_start,-carryover_err) -> data_annotated
+  
 data_annotated %>% 
   group_by(uniqueID) %>% 
   select(uniqueID,err_prop_by_ID,err_count_by_ID,err_in_ID,
@@ -146,5 +149,26 @@ write.csv(data_summary_by_ID,file="output_files/data_summary_by_ID.csv")
 write.csv(data_summary_by_ID_errors_only,file="output_files/data_summary_by_ID_errors_only.csv")
 write.csv(data_annotated,file="output_files/data_annotated.csv")
 
+## here is an example of how to exclude trajectories/samples with errors in them 
+data_annotated %>% filter(err_in_ID==0) -> data_annotated_errs_removed1
+# the above removes all trajectories that have any errors in them. 
+data_annotated %>% filter(flagged_samples==0) -> data_annotated_errs_removed2
+# and this removes just suspect samples from the data 
 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+# In the OUTPUTs the following columns are added, for analysis/exclusion of files #
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+
+## oct_jump: does this sample-to-sample difference constitute an octave jump?
+## err: does this sample-to-sample difference exceed the set thresholds. 
+## err_prop_by_ID: the prop. of sample-to-sample diffs that exceed the threshold for this trajectory
+## err_count_by_ID: the count of sample-to-sample diffs that exceed the threshold for this trajectory
+## err_in_ID: whether or not there is ANY sample-to-sample diff that exceeds the threshold for the trajectory. 
+## oct_jump_prop_by_ID: the prop. of octave jumps for this trajectory
+## oct_jump_count_by_ID: the count of octave jumps for this trajectory
+## err_in_ID: whether or not there is ANY octave jump in the trajectory
+## time_of_err: the time (in ms) where a sample-to-sample jump occurs
+## F0_of_err: the F0 value (in semitones) where an error is flagged based on the threshold. ## carryover_only: if a sample is a carryover error; one which does not exceed the threshold, but is within a threshold of a preceding error. See the paper that accompanies this script, here: https://asa.scitation.org/doi/10.1121/10.0015045 and the image illustrating carryover errors, here: https://osf.io/ms8za for explanation. 
+## prop_carryover_error: the prop. of carryover errors in a trajectory. 
+## flagged_samples: Whether a sample is flagged, either by virtue of exceeding the threshold, or being a carryover error, i.e. all suspect samples. 
 
