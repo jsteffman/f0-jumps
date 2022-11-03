@@ -1,4 +1,7 @@
 # f0-jumps
+
+This script accompanies this paper, which describes it: https://asa.scitation.org/doi/10.1121/10.0015045
+
 If you've worked with time-series f0 measurements, you know that sudden discontinuities in f0, due to consonantal junctures, non-modal phonation etc., are quite common. 
 Maybe you want to identify places where these occur in order to exclude files or samples from your analysis which show innaccurate f0 measures. 
 Maybe you're curious about the files with sudden jumps and want to inspect them. 
