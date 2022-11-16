@@ -78,7 +78,7 @@ data %>% group_by(uniqueID) %>%
         oct_jump_in_ID= ifelse(err_prop_by_ID>0,1,0)) %>% 
       mutate_if(is.numeric, ~replace(., is.na(.), 0))-> data_annotated
 
-# the following part of the script computes "carryover errors". These are errors for which the sample to sample difference does not necessarily exceed the threshold by the specified amount, but they are within one threshold's worth of the first inaccurate F0 value and are temporally adjacent to it. It is important to emphasize that these *may not be errors*, but  can inspected, for e.g., pitch doubling which raises a whole string of values to be inaccurate. 
+# The following part of the script computes "carryover errors". These are errors for which the sample to sample difference does not necessarily exceed the threshold by the specified amount, but they are within one threshold's worth of the first inaccurate F0 value and are temporally adjacent to it. It is important to emphasize that these *may not be errors*, but  can inspected, for e.g., pitch doubling which raises a whole string of values to be inaccurate. 
 
 
 data_annotated %>% group_by(uniqueID) %>% 
