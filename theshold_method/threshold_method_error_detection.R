@@ -4,7 +4,7 @@
 # which are likely to be F0 measurement errors. 
 
 # created by:  Jeremy Steffman 
-# last updated: November 3, 2022
+# last updated: November 16, 2022
 ##############################################
 
 ### required input: 
@@ -61,10 +61,12 @@ data %>% group_by(uniqueID) %>%
   mutate(lead_F0_semitones= lead(F0_semitones, order_by=t_ms),
          lead_F0_Hz= lead(F0_Hz, order_by=t_ms),
         diff = lead_F0_semitones-F0_semitones,
+        time_diff = lead(t_ms) - t_ms,
         ratio_Hz = lead_F0_Hz/F0_Hz,
         oct_jump = ifelse(ratio_Hz<0.49|ratio_Hz>1.99,1,0), # halving and doubling ratios for octave jump detection
-        err = ifelse(diff>0&(abs(diff)*time_mutation)>rise_threshold,1,
-              ifelse(diff<0&(abs(diff)*time_mutation)>fall_threshold,1,0)),
+        err = ifelse(time_diff > time_step_ms,0, ## this ignore timt  larger than the time step, e.g., over voiceless intervals. 
+              ifelse(diff>0&(abs(diff)*time_mutation)>rise_threshold,1,
+              ifelse(diff<0&(abs(diff)*time_mutation)>fall_threshold,1,0))),
         err_prop_by_ID = mean(err,na.rm = T),
         err_count_by_ID = sum(err,na.rm = T),
         err_in_ID=ifelse(err_prop_by_ID>0,1,0),
@@ -130,6 +132,8 @@ data_annotated %>% group_by(uniqueID) %>%
 
 data_annotated %>% select(-nrow,-carryover_err_start,-carryover_err) -> data_annotated
   
+mean(data_annotated$err_in_ID)
+
 data_annotated %>% 
   group_by(uniqueID) %>% 
   select(uniqueID,err_prop_by_ID,err_count_by_ID,err_in_ID,
