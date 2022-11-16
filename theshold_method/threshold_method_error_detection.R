@@ -64,7 +64,7 @@ data %>% group_by(uniqueID) %>%
         time_diff = lead(t_ms) - t_ms,
         ratio_Hz = lead_F0_Hz/F0_Hz,
         oct_jump = ifelse(ratio_Hz<0.49|ratio_Hz>1.99,1,0), # halving and doubling ratios for octave jump detection
-        err = ifelse(time_diff > time_step_ms,0, ## this ignore timt  larger than the time step, e.g., over voiceless intervals. 
+        err = ifelse(time_diff > time_step_ms,0, ## this ignore time differences larger than the time step, e.g., over voiceless intervals. 
               ifelse(diff>0&(abs(diff)*time_mutation)>rise_threshold,1,
               ifelse(diff<0&(abs(diff)*time_mutation)>fall_threshold,1,0))),
         err_prop_by_ID = mean(err,na.rm = T),
